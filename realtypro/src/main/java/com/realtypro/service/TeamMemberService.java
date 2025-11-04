@@ -1,11 +1,9 @@
 package com.realtypro.service;
 
 import com.realtypro.schema.TeamMember;
+import com.realtypro.schema.User;
 import com.realtypro.repository.TeamMemberRepository;
-import com.realtypro.repository.AgentRepository;
-import com.realtypro.repository.ManagerRepository;
-import com.realtypro.schema.Agent;
-import com.realtypro.schema.Manager;
+import com.realtypro.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,26 +18,26 @@ public class TeamMemberService {
     private TeamMemberRepository teamMemberRepository;
 
     @Autowired
-    private AgentRepository agentRepository;
-
-    @Autowired
-    private ManagerRepository managerRepository;
+    private UserRepository userRepository;
 
     // ✅ Create new team member (with validation)
-    public TeamMember createTeamMember(TeamMember teamMember) throws Exception {
-        Optional<Agent> agentOpt = agentRepository.findById(teamMember.getAgent().getAgentId());
-        Optional<Manager> managerOpt = managerRepository.findById(teamMember.getManager().getManagerId());
-
-        if (agentOpt.isEmpty()) {
-            throw new Exception("Invalid Agent ID: " + teamMember.getAgent().getAgentId());
+    public TeamMember createTeamMember(TeamMember teamMember) {
+        if (teamMember.getUser() == null || teamMember.getUser().getUserId() == null) {
+            throw new IllegalArgumentException("User reference is required");
         }
 
-        if (managerOpt.isEmpty()) {
-            throw new Exception("Invalid Manager ID: " + teamMember.getManager().getManagerId());
+        if (teamMember.getManager() == null || teamMember.getManager().getUserId() == null) {
+            throw new IllegalArgumentException("Manager reference is required");
         }
 
-        teamMember.setAgent(agentOpt.get());
-        teamMember.setManager(managerOpt.get());
+        User user = userRepository.findById(teamMember.getUser().getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + teamMember.getUser().getUserId()));
+
+        User manager = userRepository.findById(teamMember.getManager().getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("Manager not found with ID: " + teamMember.getManager().getUserId()));
+
+        teamMember.setUser(user);
+        teamMember.setManager(manager);
 
         return teamMemberRepository.save(teamMember);
     }
@@ -56,18 +54,18 @@ public class TeamMemberService {
 
     // ✅ Get team members by Manager ID
     public List<TeamMember> getTeamMembersByManagerId(Long managerId) {
-        return teamMemberRepository.findByManager_ManagerId(managerId);
+        return teamMemberRepository.findByManagerUserId(managerId);
     }
 
-    // ✅ Get team members by Agent ID
-    public List<TeamMember> getTeamMembersByAgentId(Long agentId) {
-        return teamMemberRepository.findByAgent_AgentId(agentId);
+    // ✅ Get team members by User ID
+    public List<TeamMember> getTeamMembersByUserId(Long userId) {
+        return teamMemberRepository.findByAgentUserId(userId);
     }
 
     // ✅ Delete team member
-    public void deleteTeamMember(Long id) throws Exception {
+    public void deleteTeamMember(Long id) {
         if (!teamMemberRepository.existsById(id)) {
-            throw new Exception("Team Member not found with ID: " + id);
+            throw new IllegalArgumentException("Team Member not found with ID: " + id);
         }
         teamMemberRepository.deleteById(id);
     }

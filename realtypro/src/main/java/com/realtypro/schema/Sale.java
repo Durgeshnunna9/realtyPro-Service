@@ -12,12 +12,12 @@ public class Sale {
     private Long saleId;
 
     @ManyToOne
-    @JoinColumn(name="agent_id", nullable = false)
-    private Agent agent;
+    @JoinColumn(name="user_id", nullable = false)
+    private User user;
 
     @ManyToOne
     @JoinColumn(name="manager_id", nullable = false)
-    private Manager manager;
+    private User manager;
 
     @OneToOne
     @JoinColumn(name="property_id", nullable = false, unique = true)
@@ -39,19 +39,17 @@ public class Sale {
         this.saleId = saleId;
     }
 
-    public Agent getAgent() {
-        return agent;
+    public User getUser() {
+        return user;
     }
 
-    public void setAgent(Agent agent) {
-        this.agent = agent;
-    }
+    public void setUser(User user) { this.user = user; }
 
-    public Manager getManager() {
+    public User getManager() {
         return manager;
     }
 
-    public void setManager(Manager manager) {
+    public void setManager(User manager) {
         this.manager = manager;
     }
 

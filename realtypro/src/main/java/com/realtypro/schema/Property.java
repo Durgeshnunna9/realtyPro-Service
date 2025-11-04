@@ -11,18 +11,18 @@ public class Property {
     private Long propertyId;
 
     @ManyToOne
-    @JoinColumn(name="agent_id", nullable = false)
-    private Agent agent;
+    @JoinColumn(name="user_id", nullable = false)
+    private User user;
 
     @ManyToOne
     @JoinColumn(name="manager", nullable = false)
-    private Manager manager;
+    private User manager;
 
     @Column(name="footfall", nullable = false)
-    private int footfall;
+    private Integer footfall;
 
     @Column(name="snack_spend", nullable = false)
-    private int snackSpend;
+    private Integer snackSpend;
 
     @Column(name="property_type", nullable = false)
     private String propertyType;
@@ -70,34 +70,34 @@ public class Property {
     private String floor;
 
     @Column(name = "rental_value", columnDefinition = "TEXT")
-    private String rentalValue;
+    private Integer rentalValue;
 
     @Column(name = "parking_availability", columnDefinition = "TEXT")
     private String parkingAvailability;
 
     @Column(name = "two_w_capacity", columnDefinition = "TEXT")
-    private String twoWCapacity;
+    private Integer twoWCapacity;
 
     @Column(name = "four_w_capacity", columnDefinition = "TEXT")
-    private String fourWCapacity;
+    private Integer fourWCapacity;
 
     @Column(name = "owner_contacted", columnDefinition = "TEXT")
-    private String ownerContacted;
+    private Boolean ownerContacted;
 
     @Column(name = "washroom", columnDefinition = "TEXT")
-    private String washroom;
+    private Boolean washroom;
 
     @Column(name = "electricity", columnDefinition = "TEXT")
-    private String electricity;
+    private Boolean electricity;
 
     @Column(name = "generator", columnDefinition = "TEXT")
-    private String generator;
+    private Boolean generator;
 
     @Column(name = "building_age", columnDefinition = "TEXT")
     private String buildingAge;
 
     @Column(name = "water_supply", columnDefinition = "TEXT")
-    private String waterSupply;
+    private Boolean waterSupply;
 
     @Column(name = "building_condition", columnDefinition = "TEXT")
     private String buildingCondition;
@@ -129,35 +129,35 @@ public class Property {
         this.propertyId = propertyId;
     }
 
-    public Agent getAgent() {
-        return agent;
+    public User getUser() {
+        return user;
     }
 
-    public void setAgent(Agent agent) {
-        this.agent = agent;
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public Manager getManager() {
+    public User getManager() {
         return manager;
     }
 
-    public void setManager(Manager manager) {
+    public void setManager(User manager) {
         this.manager = manager;
     }
 
-    public int getFootfall() {
+    public Integer getFootfall() {
         return footfall;
     }
 
-    public void setFootfall(int footfall) {
+    public void setFootfall(Integer footfall) {
         this.footfall = footfall;
     }
 
-    public int getSnackSpend() {
+    public Integer getSnackSpend() {
         return snackSpend;
     }
 
-    public void setSnackSpend(int snackSpend) {
+    public void setSnackSpend(Integer snackSpend) {
         this.snackSpend = snackSpend;
     }
 
@@ -211,35 +211,35 @@ public class Property {
     public String getFloor() { return floor; }
     public void setFloor(String floor) { this.floor = floor; }
 
-    public String getRentalValue() { return rentalValue; }
-    public void setRentalValue(String rentalValue) { this.rentalValue = rentalValue; }
+    public Integer getRentalValue() { return rentalValue; }
+    public void setRentalValue(Integer rentalValue) { this.rentalValue = rentalValue; }
 
     public String getParkingAvailability() { return parkingAvailability; }
     public void setParkingAvailability(String parkingAvailability) { this.parkingAvailability = parkingAvailability; }
 
-    public String getTwoWCapacity() { return twoWCapacity; }
-    public void setTwoWCapacity(String twoWCapacity) { this.twoWCapacity = twoWCapacity; }
+    public Integer getTwoWCapacity() { return twoWCapacity; }
+    public void setTwoWCapacity(Integer twoWCapacity) { this.twoWCapacity = twoWCapacity; }
 
-    public String getFourWCapacity() { return fourWCapacity; }
-    public void setFourWCapacity(String fourWCapacity) { this.fourWCapacity = fourWCapacity; }
+    public Integer getFourWCapacity() { return fourWCapacity; }
+    public void setFourWCapacity(Integer fourWCapacity) { this.fourWCapacity = fourWCapacity; }
 
-    public String getOwnerContacted() { return ownerContacted; }
-    public void setOwnerContacted(String ownerContacted) { this.ownerContacted = ownerContacted; }
+    public Boolean getOwnerContacted() { return ownerContacted; }
+    public void setOwnerContacted(Boolean ownerContacted) { this.ownerContacted = ownerContacted; }
 
-    public String getWashroom() { return washroom; }
-    public void setWashroom(String washroom) { this.washroom = washroom; }
+    public Boolean getWashroom() { return washroom; }
+    public void setWashroom(Boolean washroom) { this.washroom = washroom; }
 
-    public String getElectricity() { return electricity; }
-    public void setElectricity(String electricity) { this.electricity = electricity; }
+    public Boolean getElectricity() { return electricity; }
+    public void setElectricity(Boolean electricity) { this.electricity = electricity; }
 
-    public String getGenerator() { return generator; }
-    public void setGenerator(String generator) { this.generator = generator; }
+    public Boolean getGenerator() { return generator; }
+    public void setGenerator(Boolean generator) { this.generator = generator; }
 
     public String getBuildingAge() { return buildingAge; }
     public void setBuildingAge(String buildingAge) { this.buildingAge = buildingAge; }
 
-    public String getWaterSupply() { return waterSupply; }
-    public void setWaterSupply(String waterSupply) { this.waterSupply = waterSupply; }
+    public Boolean getWaterSupply() { return waterSupply; }
+    public void setWaterSupply(Boolean waterSupply) { this.waterSupply = waterSupply; }
 
     public String getBuildingCondition() { return buildingCondition; }
     public void setBuildingCondition(String buildingCondition) { this.buildingCondition = buildingCondition; }

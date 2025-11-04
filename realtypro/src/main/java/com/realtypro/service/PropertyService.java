@@ -1,11 +1,10 @@
 package com.realtypro.service;
 
-import com.realtypro.schema.Agent;
-import com.realtypro.schema.Manager;
+import com.realtypro.repository.UserRepository;
+import com.realtypro.schema.User;
 import com.realtypro.schema.Property;
-import com.realtypro.repository.AgentRepository;
-import com.realtypro.repository.ManagerRepository;
 import com.realtypro.repository.PropertyRepository;
+import com.realtypro.utilities.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,31 +17,25 @@ public class PropertyService {
     private PropertyRepository propertyRepository;
 
     @Autowired
-    private AgentRepository agentRepository;
-
-    @Autowired
-    private ManagerRepository managerRepository;
+    private UserRepository userRepository;
 
     // ➕ CREATE property
     public Property createProperty(Property property) {
-        if (property.getAgent() == null || property.getAgent().getAgentId() == null) {
-            throw new IllegalArgumentException("Agent reference is required");
+        if (property.getUser() == null || property.getUser().getUserId() == null) {
+            throw new IllegalArgumentException("User reference is required");
         }
 
-        if (property.getManager() == null || property.getManager().getManagerId() == null) {
-            throw new IllegalArgumentException("Manager reference is required");
+        // Fetch user from DB
+        User user = userRepository.findById(property.getUser().getUserId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found with ID: " + property.getUser().getUserId()));
+
+        // Validate role
+        if (user.getRole() != Role.AGENT && user.getRole() != Role.MANAGER) {
+            throw new IllegalArgumentException("User must be either an AGENT or a MANAGER");
         }
 
-        Agent agent = agentRepository.findById(property.getAgent().getAgentId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Agent not found with ID: " + property.getAgent().getAgentId()));
-
-        Manager manager = managerRepository.findById(property.getManager().getManagerId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Manager not found with ID: " + property.getManager().getManagerId()));
-
-        property.setAgent(agent);
-        property.setManager(manager);
+        property.setUser(user);
 
         return propertyRepository.save(property);
     }
@@ -70,11 +63,15 @@ public class PropertyService {
         existing.setStatus(updatedProperty.getStatus());
         existing.setStoreModel(updatedProperty.getStoreModel());
         existing.setStoreSize(updatedProperty.getStoreSize());
+        existing.setStoreDimensionsL(updatedProperty.getStoreDimensionsL());
+        existing.setStoreDimensionsW(updatedProperty.getStoreDimensionsW());
         existing.setRoadFacing(updatedProperty.getRoadFacing());
         existing.setEntryDirection(updatedProperty.getEntryDirection());
         existing.setCornerPiece(updatedProperty.getCornerPiece());
         existing.setCornerSide(updatedProperty.getCornerSide());
         existing.setStorePosition(updatedProperty.getStorePosition());
+        existing.setShutterL(updatedProperty.getShutterL());
+        existing.setShutterW(updatedProperty.getShutterW());
         existing.setFrontOffset(updatedProperty.getFrontOffset());
         existing.setSetback(updatedProperty.getSetback());
         existing.setFloor(updatedProperty.getFloor());
@@ -94,20 +91,17 @@ public class PropertyService {
         existing.setNeighbourhoodFacilities(updatedProperty.getNeighbourhoodFacilities());
         existing.setLocationAdvantages(updatedProperty.getLocationAdvantages());
 
-        // Update linked agent
-        if (updatedProperty.getAgent() != null && updatedProperty.getAgent().getAgentId() != null) {
-            Agent agent = agentRepository.findById(updatedProperty.getAgent().getAgentId())
+        // ✅ Update linked user (instead of agent/manager)
+        if (updatedProperty.getUser() != null && updatedProperty.getUser().getUserId() != null) {
+            User user = userRepository.findById(updatedProperty.getUser().getUserId())
                     .orElseThrow(() -> new IllegalArgumentException(
-                            "Agent not found with ID: " + updatedProperty.getAgent().getAgentId()));
-            existing.setAgent(agent);
-        }
+                            "User not found with ID: " + updatedProperty.getUser().getUserId()));
 
-        // Update linked manager
-        if (updatedProperty.getManager() != null && updatedProperty.getManager().getManagerId() != null) {
-            Manager manager = managerRepository.findById(updatedProperty.getManager().getManagerId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Manager not found with ID: " + updatedProperty.getManager().getManagerId()));
-            existing.setManager(manager);
+            if (user.getRole() != Role.AGENT && user.getRole() != Role.MANAGER) {
+                throw new IllegalArgumentException("User must be either an AGENT or a MANAGER");
+            }
+
+            existing.setUser(user);
         }
 
         return propertyRepository.save(existing);

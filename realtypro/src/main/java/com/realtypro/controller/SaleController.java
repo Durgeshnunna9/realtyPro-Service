@@ -1,32 +1,26 @@
 package com.realtypro.controller;
 
-import com.realtypro.repository.AgentRepository;
-import com.realtypro.repository.ManagerRepository;
-import com.realtypro.repository.PropertyRepository;
-import com.realtypro.repository.SaleRepository;
-import com.realtypro.schema.Agent;
-import com.realtypro.schema.Manager;
-import com.realtypro.schema.Property;
 import com.realtypro.schema.Sale;
+import com.realtypro.schema.Property;
+import com.realtypro.schema.User;
+import com.realtypro.repository.SaleRepository;
+import com.realtypro.repository.UserRepository;
+import com.realtypro.repository.PropertyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
-
+import java.util.*;
 
 @RestController
 @RequestMapping("/sales")
 public class SaleController {
+
     @Autowired
     private SaleRepository saleRepository;
 
     @Autowired
-    private AgentRepository agentRepository;
-
-    @Autowired
-    private ManagerRepository managerRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private PropertyRepository propertyRepository;
@@ -35,26 +29,25 @@ public class SaleController {
     @PostMapping("/create")
     public ResponseEntity<?> createSale(@RequestBody Sale sale) {
         try {
-            // Validate agent
-            Optional<Agent> agentOpt = agentRepository.findById(sale.getAgent().getAgentId());
-            if (agentOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Invalid Agent ID");
+            // Validate Agent (User with role = AGENT)
+            Optional<User> agentOpt = userRepository.findById(sale.getUser().getUserId());
+            if (agentOpt.isEmpty() || !"AGENT".equalsIgnoreCase(agentOpt.get().getRole().name())) {
+                return ResponseEntity.badRequest().body("Invalid Agent ID or Role");
             }
 
-            // Validate manager
-            Optional<Manager> managerOpt = managerRepository.findById(sale.getManager().getManagerId());
-            if (managerOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Invalid Manager ID");
+            // Validate Manager (User with role = MANAGER)
+            Optional<User> managerOpt = userRepository.findById(sale.getManager().getUserId());
+            if (managerOpt.isEmpty() || !"MANAGER".equalsIgnoreCase(managerOpt.get().getRole().name())) {
+                return ResponseEntity.badRequest().body("Invalid Manager ID or Role");
             }
 
-            // Validate property
+            // Validate Property
             Optional<Property> propertyOpt = propertyRepository.findById(sale.getProperty().getPropertyId());
             if (propertyOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Invalid Property ID");
             }
 
-            // Set validated references
-            sale.setAgent(agentOpt.get());
+            sale.setUser(agentOpt.get());
             sale.setManager(managerOpt.get());
             sale.setProperty(propertyOpt.get());
 
@@ -62,7 +55,8 @@ public class SaleController {
             return ResponseEntity.ok(savedSale);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error saving sale: " + e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body("Error saving sale: " + e.getMessage());
         }
     }
 
@@ -70,21 +64,16 @@ public class SaleController {
     @GetMapping("/all")
     public ResponseEntity<List<Sale>> getAllSales() {
         List<Sale> sales = saleRepository.findAll();
-        if (sales.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (sales.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(sales);
     }
 
-    // ✅ READ SINGLE SALE BY ID
+    // ✅ READ SALE BY ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getSaleById(@PathVariable Long id) {
-        Optional<Sale> sale = saleRepository.findById(id);
-        if (sale.isPresent()) {
-            return ResponseEntity.ok(sale.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return saleRepository.findById(id)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // ✅ UPDATE SALE
@@ -94,16 +83,15 @@ public class SaleController {
             existingSale.setSaleAmount(updatedSale.getSaleAmount());
             existingSale.setCommission(updatedSale.getCommission());
 
-            // Optionally update relationships
-            if (updatedSale.getAgent() != null) {
-                agentRepository.findById(updatedSale.getAgent().getAgentId())
-                        .ifPresent(existingSale::setAgent);
+            if (updatedSale.getUser() != null && updatedSale.getUser().getUserId() != null) {
+                userRepository.findById(updatedSale.getUser().getUserId())
+                        .ifPresent(existingSale::setUser);
             }
-            if (updatedSale.getManager() != null) {
-                managerRepository.findById(updatedSale.getManager().getManagerId())
+            if (updatedSale.getManager() != null && updatedSale.getManager().getUserId() != null) {
+                userRepository.findById(updatedSale.getManager().getUserId())
                         .ifPresent(existingSale::setManager);
             }
-            if (updatedSale.getProperty() != null) {
+            if (updatedSale.getProperty() != null && updatedSale.getProperty().getPropertyId() != null) {
                 propertyRepository.findById(updatedSale.getProperty().getPropertyId())
                         .ifPresent(existingSale::setProperty);
             }
@@ -122,5 +110,4 @@ public class SaleController {
         saleRepository.deleteById(id);
         return ResponseEntity.ok("Sale deleted successfully.");
     }
-
 }

@@ -3,6 +3,7 @@ package com.realtypro.dto;
 import com.realtypro.utilities.Role;
 
 public class UserDTO {
+
     private Long userId;
     private String firstName;
     private String lastName;
@@ -10,11 +11,14 @@ public class UserDTO {
     private Role role;
     private Integer age;
     private String mobileNumber;
+    private Float rating; // ✅ Added properly
 
-    // Constructors
+    // ✅ Default constructor
     public UserDTO() {}
 
-    public UserDTO(Long userId, String firstName, String lastName, String email, Role role, Integer age, String mobileNumber) {
+    // ✅ Constructor with all fields (including rating)
+    public UserDTO(Long userId, String firstName, String lastName, String email,
+                   Role role, Integer age, String mobileNumber, Float rating) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -22,9 +26,16 @@ public class UserDTO {
         this.role = role;
         this.age = age;
         this.mobileNumber = mobileNumber;
+        this.rating = rating;
     }
 
-    // Getters & Setters
+    // ✅ Constructor without rating
+    public UserDTO(Long userId, String firstName, String lastName, String email,
+                   Role role, Integer age, String mobileNumber) {
+        this(userId, firstName, lastName, email, role, age, mobileNumber, null);
+    }
+
+    // ✅ Getters & Setters
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
@@ -45,4 +56,7 @@ public class UserDTO {
 
     public String getMobileNumber() { return mobileNumber; }
     public void setMobileNumber(String mobileNumber) { this.mobileNumber = mobileNumber; }
+
+    public Float getRating() { return rating; }
+    public void setRating(Float rating) { this.rating = rating; }
 }

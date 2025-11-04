@@ -1,25 +1,64 @@
 package com.realtypro.service;
 
-import com.realtypro.dto.PerformanceDTO;
+import com.realtypro.dto.UserPerformanceResponse;
+import com.realtypro.schema.User;
+import com.realtypro.utilities.Role;
+import com.realtypro.repository.PropertyRepository;
+import com.realtypro.repository.TaskRepository;
+import com.realtypro.repository.SaleRepository;
+import com.realtypro.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class PerformanceService {
 
-    public List<PerformanceDTO> getAgentPerformance(Long agentId) {
-        // TODO: Replace with actual DB queries (e.g. salesRepo.findByAgentId(agentId))
-        // For now, returning mock data for graph testing
+    @Autowired
+    private UserRepository userRepository;
 
-        List<PerformanceDTO> performance = new ArrayList<>();
-        performance.add(new PerformanceDTO("Jan", 4, 120000, 6000));
-        performance.add(new PerformanceDTO("Feb", 6, 180000, 9000));
-        performance.add(new PerformanceDTO("Mar", 5, 150000, 7500));
-        performance.add(new PerformanceDTO("Apr", 8, 240000, 12000));
-        performance.add(new PerformanceDTO("May", 10, 300000, 15000));
+    @Autowired
+    private PropertyRepository propertyRepository;
 
-        return performance;
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private SaleRepository saleRepository;
+
+    public UserPerformanceResponse getPerformanceByUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+
+        Role role = user.getRole();
+        UserPerformanceResponse response = new UserPerformanceResponse();
+
+        response.setUserId(user.getUserId());
+        response.setRole(role.name());
+        response.setFullName(user.getFirstName() + " " + user.getLastName());
+
+        // ✅ Role-based performance calculation
+        if (role == Role.AGENT) {
+            long propertyCount = propertyRepository.countByAgentUserId(userId);
+            long pendingTasks = taskRepository.countByAgentUserIdAndStatusNot(userId, "completed");
+            Double totalSales = saleRepository.sumSalesByAgent(userId);
+
+            response.setListings(propertyCount);
+            response.setPendingTasks(pendingTasks);
+            response.setTotalSales(totalSales != null ? totalSales : 0.0);
+        }
+        else if (role == Role.MANAGER) {
+            long managedProperties = propertyRepository.countByManagerUserId(userId);
+            long pendingTasks = taskRepository.countByManagerUserIdAndStatusNot(userId, "completed");
+            Double totalSales = saleRepository.sumSalesByManager(userId); // optional
+
+            response.setManagedProperties(managedProperties);
+            response.setPendingTasks(pendingTasks);
+            response.setTotalSales(totalSales != null ? totalSales : 0.0);
+        }
+        else {
+            throw new IllegalArgumentException("Unsupported role for performance view: " + role);
+        }
+
+        return response;
     }
 }

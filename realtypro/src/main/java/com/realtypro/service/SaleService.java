@@ -1,13 +1,12 @@
 package com.realtypro.service;
 
-import com.realtypro.repository.AgentRepository;
-import com.realtypro.repository.ManagerRepository;
-import com.realtypro.repository.PropertyRepository;
-import com.realtypro.repository.SaleRepository;
-import com.realtypro.schema.Agent;
-import com.realtypro.schema.Manager;
-import com.realtypro.schema.Property;
 import com.realtypro.schema.Sale;
+import com.realtypro.schema.User;
+import com.realtypro.schema.Property;
+import com.realtypro.repository.SaleRepository;
+import com.realtypro.repository.UserRepository;
+import com.realtypro.repository.PropertyRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,35 +20,29 @@ public class SaleService {
     private SaleRepository saleRepository;
 
     @Autowired
-    private AgentRepository agentRepository;
-
-    @Autowired
-    private ManagerRepository managerRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private PropertyRepository propertyRepository;
 
-
     // ✅ Create Sale
     public Sale createSale(Sale sale) {
-        Optional<Agent> agentOpt = agentRepository.findById(sale.getAgent().getAgentId());
-        if (agentOpt.isEmpty()) {
-            throw new IllegalArgumentException("Invalid Agent ID: " + sale.getAgent().getAgentId());
+        if (sale.getUser() == null || sale.getUser().getUserId() == null) {
+            throw new IllegalArgumentException("User reference is required");
         }
 
-        Optional<Manager> managerOpt = managerRepository.findById(sale.getManager().getManagerId());
-        if (managerOpt.isEmpty()) {
-            throw new IllegalArgumentException("Invalid Manager ID: " + sale.getManager().getManagerId());
+        User user = userRepository.findById(sale.getUser().getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + sale.getUser().getUserId()));
+
+        if (user.getRole() == null) {
+            throw new IllegalArgumentException("User role is not defined");
         }
 
-        Optional<Property> propertyOpt = propertyRepository.findById(sale.getProperty().getPropertyId());
-        if (propertyOpt.isEmpty()) {
-            throw new IllegalArgumentException("Invalid Property ID: " + sale.getProperty().getPropertyId());
-        }
+        Property property = propertyRepository.findById(sale.getProperty().getPropertyId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Property ID: " + sale.getProperty().getPropertyId()));
 
-        sale.setAgent(agentOpt.get());
-        sale.setManager(managerOpt.get());
-        sale.setProperty(propertyOpt.get());
+        sale.setUser(user);
+        sale.setProperty(property);
 
         return saleRepository.save(sale);
     }
@@ -71,16 +64,10 @@ public class SaleService {
             existingSale.setSaleAmount(updatedSale.getSaleAmount());
             existingSale.setCommission(updatedSale.getCommission());
 
-            // Update agent
-            if (updatedSale.getAgent() != null && updatedSale.getAgent().getAgentId() != null) {
-                agentRepository.findById(updatedSale.getAgent().getAgentId())
-                        .ifPresent(existingSale::setAgent);
-            }
-
-            // Update manager
-            if (updatedSale.getManager() != null && updatedSale.getManager().getManagerId() != null) {
-                managerRepository.findById(updatedSale.getManager().getManagerId())
-                        .ifPresent(existingSale::setManager);
+            // Update user
+            if (updatedSale.getUser() != null && updatedSale.getUser().getUserId() != null) {
+                userRepository.findById(updatedSale.getUser().getUserId())
+                        .ifPresent(existingSale::setUser);
             }
 
             // Update property

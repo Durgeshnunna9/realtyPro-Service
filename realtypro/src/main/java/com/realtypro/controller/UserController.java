@@ -2,6 +2,7 @@ package com.realtypro.controller;
 
 import com.realtypro.repository.UserRepository;
 import com.realtypro.schema.User;
+import com.realtypro.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +19,9 @@ import java.util.Optional;
 public class UserController {
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -64,6 +68,16 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/agents")
+    public ResponseEntity<List<User>> getAgents() {
+        return ResponseEntity.ok(userService.getAgents());
+    }
+
+    @GetMapping("/managers")
+    public ResponseEntity<List<User>> getManagers() {
+        return ResponseEntity.ok(userService.getManagers());
+    }
+
     // ✅ UPDATE
     @PutMapping("/update/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
@@ -76,6 +90,7 @@ public class UserController {
                     user.setRole(updatedUser.getRole());
                     user.setPassword(updatedUser.getPassword());
                     user.setMobile_number(updatedUser.getMobile_number());
+                    user.setRating(updatedUser.getRating());
                     User savedUser = userRepository.save(user);
                     return ResponseEntity.ok(savedUser);
                 })

@@ -11,12 +11,12 @@ public class TeamMember {
     private Long teamId;
 
     @ManyToOne
-    @JoinColumn(name = "agent_id", nullable = false)
-    private Agent agent;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "manager_id", nullable = false)
-    private Manager manager;
+    private User manager;
 
     public TeamMember() {}
 
@@ -28,19 +28,19 @@ public class TeamMember {
         this.teamId = teamId;
     }
 
-    public Manager getManager() {
+    public User getManager() {
         return manager;
     }
 
-    public void setManager(Manager manager) {
+    public void setManager(User manager) {
         this.manager = manager;
     }
 
-    public Agent getAgent() {
-        return agent;
+    public User getUser() {
+        return user;
     }
 
-    public void setAgent(Agent agent) {
-        this.agent = agent;
+    public void setUser(User user) {
+        this.user = user;
     }
 }

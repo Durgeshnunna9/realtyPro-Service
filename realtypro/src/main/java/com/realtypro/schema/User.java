@@ -32,6 +32,9 @@ public class User {
     @Column(name = "role", nullable = false)
     private Role role;
 
+    @Column(name = "rating", nullable = true)
+    private Float rating;
+
     // Constructors
     public User() {}
 
@@ -98,5 +101,13 @@ public class User {
 
     public void setMobile_number(String mobile_number) {
         this.mobile_number = mobile_number;
+    }
+
+    public Float getRating() {
+        return rating;
+    }
+
+    public void setRating(Float rating) {
+        this.rating = rating;
     }
 }

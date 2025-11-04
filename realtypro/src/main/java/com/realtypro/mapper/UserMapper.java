@@ -15,7 +15,8 @@ public class UserMapper {
                 user.getEmail(),
                 user.getRole(),
                 user.getAge(),
-                user.getMobile_number()
+                user.getMobile_number(),
+                user.getRating()
         );
     }
 }

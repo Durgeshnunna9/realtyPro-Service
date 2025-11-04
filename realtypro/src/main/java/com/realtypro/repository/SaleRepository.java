@@ -8,6 +8,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SaleRepository extends JpaRepository<Sale, Long> {
-    @Query("SELECT SUM(s.saleAmount) FROM Sale s WHERE s.agent.agentId = :agentId")
-    Double sumSalesByAgent(@Param("agentId") Long agentId);
+    @Query("SELECT SUM(s.saleAmount) FROM Sale s WHERE s.agent.userId = :userId")
+    Double sumSalesByAgent(@Param("userId") Long userId);
+
+    @Query("SELECT SUM(s.saleAmount) FROM Sale s WHERE s.manager.userId = :userId")
+    Double sumSalesByManager(@Param("userId") Long userId);
+
 }

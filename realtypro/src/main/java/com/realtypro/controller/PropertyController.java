@@ -1,11 +1,10 @@
 package com.realtypro.controller;
 
+import com.realtypro.repository.UserRepository;
 import com.realtypro.schema.Property;
-import com.realtypro.schema.Agent;
-import com.realtypro.schema.Manager;
 import com.realtypro.repository.PropertyRepository;
-import com.realtypro.repository.AgentRepository;
-import com.realtypro.repository.ManagerRepository;
+import com.realtypro.schema.User;
+import com.realtypro.utilities.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -23,35 +23,39 @@ public class PropertyController {
     private PropertyRepository propertyRepository;
 
     @Autowired
-    private AgentRepository agentRepository;
-
-    @Autowired
-    private ManagerRepository managerRepository;
+    private UserRepository userRepository;
 
     // ➕ Create Property
     @PostMapping("/create")
     public ResponseEntity<?> createProperty(@RequestBody Property property) {
         try {
             // Validate and attach Agent
-            if (property.getAgent() == null || property.getAgent().getAgentId() == null) {
+            if (property.getUser() == null || property.getUser().getUserId() == null) {
                 return ResponseEntity.badRequest().body("Agent reference is required");
             }
-            Optional<Agent> agentOpt = agentRepository.findById(property.getAgent().getAgentId());
-            if (agentOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Agent not found with ID: " + property.getAgent().getAgentId());
+
+            User agent = userRepository.findById(property.getUser().getUserId())
+                    .orElseThrow(() -> new RuntimeException("Agent not found with ID: " + property.getUser().getUserId()));
+
+            if (agent.getRole() != Role.AGENT) {
+                return ResponseEntity.badRequest().body("User with ID " + agent.getUserId() + " is not an AGENT");
             }
 
             // Validate and attach Manager
-            if (property.getManager() == null || property.getManager().getManagerId() == null) {
+            if (property.getManager() == null || property.getManager().getUserId() == null) {
                 return ResponseEntity.badRequest().body("Manager reference is required");
             }
-            Optional<Manager> managerOpt = managerRepository.findById(property.getManager().getManagerId());
-            if (managerOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Manager not found with ID: " + property.getManager().getManagerId());
+
+            User manager = userRepository.findById(property.getManager().getUserId())
+                    .orElseThrow(() -> new RuntimeException("Manager not found with ID: " + property.getManager().getUserId()));
+
+            if (manager.getRole() != Role.MANAGER) {
+                return ResponseEntity.badRequest().body("User with ID " + manager.getUserId() + " is not a MANAGER");
             }
 
-            property.setAgent(agentOpt.get());
-            property.setManager(managerOpt.get());
+            // Set validated users
+            property.setUser(agent);
+            property.setManager(manager);
 
             Property savedProperty = propertyRepository.save(property);
             return ResponseEntity.ok(savedProperty);
@@ -66,44 +70,35 @@ public class PropertyController {
     @GetMapping("/all")
     public ResponseEntity<List<Property>> getAllProperties() {
         List<Property> properties = propertyRepository.findAll();
-        if (properties.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(properties);
+        return properties.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(properties);
     }
 
     // 🔍 Get property by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getPropertyById(@PathVariable Long id) {
-        Optional<Property> propertyOpt = propertyRepository.findById(id);
-        return propertyOpt.map(ResponseEntity::ok)
+        return propertyRepository.findById(id)
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Get Property by AgentId
-    @GetMapping("/agent/{agentId}")
-    public ResponseEntity<List<Property>> getPropertiesByAgent(@PathVariable Long agentId) {
-        List<Property> properties = propertyRepository.findByAgentAgentId(agentId);
-
-        if (properties.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Collections.emptyList());
-        }
-
-        return ResponseEntity.ok(properties);
+    // 🧭 Get properties by Agent (User)
+    @GetMapping("/agent/{userId}")
+    public ResponseEntity<List<Property>> getPropertiesByAgent(@PathVariable Long userId) {
+        List<Property> properties = propertyRepository.findByAgentUserId(userId);
+        return properties.isEmpty()
+                ? ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList())
+                : ResponseEntity.ok(properties);
     }
 
-    // Get latest properties by AgentId (sorted DESC)
-    @GetMapping("/agent/{agentId}/latest")
-    public ResponseEntity<List<Property>> getLatestPropertiesByAgent(@PathVariable Long agentId) {
-        List<Property> properties = propertyRepository.findByAgentAgentIdOrderByPropertyIdDesc(agentId);
-
-        if (properties.isEmpty()) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
-
-        return ResponseEntity.ok(properties);
+    // 🧭 Get properties by Manager (User)
+    @GetMapping("/manager/{userId}")
+    public ResponseEntity<List<Property>> getPropertiesByManager(@PathVariable Long userId) {
+        List<Property> properties = propertyRepository.findByManagerUserId(userId);
+        return properties.isEmpty()
+                ? ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList())
+                : ResponseEntity.ok(properties);
     }
+
 
     // ✏️ Update property
     @PutMapping("/update/{id}")
@@ -115,45 +110,49 @@ public class PropertyController {
 
         Property existing = existingOpt.get();
 
-        // Update only fields that are passed (basic example)
-        existing.setFootfall(updatedProperty.getFootfall());
-        existing.setSnackSpend(updatedProperty.getSnackSpend());
-        existing.setPropertyType(updatedProperty.getPropertyType());
-        existing.setStatus(updatedProperty.getStatus());
-        existing.setStoreModel(updatedProperty.getStoreModel());
-        existing.setStoreSize(updatedProperty.getStoreSize());
-        existing.setRoadFacing(updatedProperty.getRoadFacing());
-        existing.setEntryDirection(updatedProperty.getEntryDirection());
-        existing.setCornerPiece(updatedProperty.getCornerPiece());
-        existing.setCornerSide(updatedProperty.getCornerSide());
-        existing.setStorePosition(updatedProperty.getStorePosition());
-        existing.setFrontOffset(updatedProperty.getFrontOffset());
-        existing.setSetback(updatedProperty.getSetback());
-        existing.setFloor(updatedProperty.getFloor());
-        existing.setRentalValue(updatedProperty.getRentalValue());
-        existing.setParkingAvailability(updatedProperty.getParkingAvailability());
-        existing.setTwoWCapacity(updatedProperty.getTwoWCapacity());
-        existing.setFourWCapacity(updatedProperty.getFourWCapacity());
-        existing.setOwnerContacted(updatedProperty.getOwnerContacted());
-        existing.setWashroom(updatedProperty.getWashroom());
-        existing.setElectricity(updatedProperty.getElectricity());
-        existing.setGenerator(updatedProperty.getGenerator());
-        existing.setBuildingAge(updatedProperty.getBuildingAge());
-        existing.setWaterSupply(updatedProperty.getWaterSupply());
-        existing.setBuildingCondition(updatedProperty.getBuildingCondition());
-        existing.setLandmark(updatedProperty.getLandmark());
-        existing.setAboutProperty(updatedProperty.getAboutProperty());
-        existing.setNeighbourhoodFacilities(updatedProperty.getNeighbourhoodFacilities());
-        existing.setLocationAdvantages(updatedProperty.getLocationAdvantages());
+        // ✅ Update only non-null fields from updatedProperty
+        if (updatedProperty.getFootfall() != 0) existing.setFootfall(updatedProperty.getFootfall());
+        if (updatedProperty.getSnackSpend() != 0) existing.setSnackSpend(updatedProperty.getSnackSpend());
+        if (updatedProperty.getPropertyType() != null) existing.setPropertyType(updatedProperty.getPropertyType());
+        if (updatedProperty.getStatus() != null) existing.setStatus(updatedProperty.getStatus());
+        if (updatedProperty.getStoreModel() != null) existing.setStoreModel(updatedProperty.getStoreModel());
+        if (updatedProperty.getStoreSize() != 0) existing.setStoreSize(updatedProperty.getStoreSize());
+        if (updatedProperty.getStoreDimensionsL() != 0) existing.setStoreDimensionsL(updatedProperty.getStoreDimensionsL());
+        if (updatedProperty.getStoreDimensionsW() != 0) existing.setStoreDimensionsW(updatedProperty.getStoreDimensionsW());
+        if (updatedProperty.getRoadFacing() != null) existing.setRoadFacing(updatedProperty.getRoadFacing());
+        if (updatedProperty.getEntryDirection() != null) existing.setEntryDirection(updatedProperty.getEntryDirection());
+        if (updatedProperty.getCornerPiece() != null) existing.setCornerPiece(updatedProperty.getCornerPiece());
+        if (updatedProperty.getCornerSide() != null) existing.setCornerSide(updatedProperty.getCornerSide());
+        if (updatedProperty.getShutterL() != 0) existing.setShutterL(updatedProperty.getShutterL());
+        if (updatedProperty.getShutterW() != 0) existing.setShutterW(updatedProperty.getShutterW());
+        if (updatedProperty.getStorePosition() != null) existing.setStorePosition(updatedProperty.getStorePosition());
+        if (updatedProperty.getFrontOffset() != 0) existing.setFrontOffset(updatedProperty.getFrontOffset());
+        if (updatedProperty.getSetback() != null) existing.setSetback(updatedProperty.getSetback());
+        if (updatedProperty.getFloor() != null) existing.setFloor(updatedProperty.getFloor());
+        if (updatedProperty.getRentalValue() != 0) existing.setRentalValue(updatedProperty.getRentalValue());
+        if (updatedProperty.getParkingAvailability() != null) existing.setParkingAvailability(updatedProperty.getParkingAvailability());
+        if (updatedProperty.getTwoWCapacity() != 0) existing.setTwoWCapacity(updatedProperty.getTwoWCapacity());
+        if (updatedProperty.getFourWCapacity() != 0) existing.setFourWCapacity(updatedProperty.getFourWCapacity());
+        if (updatedProperty.getOwnerContacted() != null) existing.setOwnerContacted(updatedProperty.getOwnerContacted());
+        if (updatedProperty.getWashroom() != null) existing.setWashroom(updatedProperty.getWashroom());
+        if (updatedProperty.getElectricity() != null) existing.setElectricity(updatedProperty.getElectricity());
+        if (updatedProperty.getGenerator() != null) existing.setGenerator(updatedProperty.getGenerator());
+        if (updatedProperty.getBuildingAge() != null) existing.setBuildingAge(updatedProperty.getBuildingAge());
+        if (updatedProperty.getWaterSupply() != null) existing.setWaterSupply(updatedProperty.getWaterSupply());
+        if (updatedProperty.getBuildingCondition() != null) existing.setBuildingCondition(updatedProperty.getBuildingCondition());
+        if (updatedProperty.getLandmark() != null) existing.setLandmark(updatedProperty.getLandmark());
+        if (updatedProperty.getAboutProperty() != null) existing.setAboutProperty(updatedProperty.getAboutProperty());
+        if (updatedProperty.getNeighbourhoodFacilities() != null) existing.setNeighbourhoodFacilities(updatedProperty.getNeighbourhoodFacilities());
+        if (updatedProperty.getLocationAdvantages() != null) existing.setLocationAdvantages(updatedProperty.getLocationAdvantages());
 
-        // Update linked agent/manager (optional)
-        if (updatedProperty.getAgent() != null && updatedProperty.getAgent().getAgentId() != null) {
-            agentRepository.findById(updatedProperty.getAgent().getAgentId())
-                    .ifPresent(existing::setAgent);
+        // ✅ Update linked users (agent & manager)
+        if (updatedProperty.getUser() != null && updatedProperty.getUser().getUserId() != null) {
+            userRepository.findById(updatedProperty.getUser().getUserId())
+                    .ifPresent(existing::setUser);
         }
 
-        if (updatedProperty.getManager() != null && updatedProperty.getManager().getManagerId() != null) {
-            managerRepository.findById(updatedProperty.getManager().getManagerId())
+        if (updatedProperty.getManager() != null && updatedProperty.getManager().getUserId() != null) {
+            userRepository.findById(updatedProperty.getManager().getUserId())
                     .ifPresent(existing::setManager);
         }
 
@@ -168,6 +167,6 @@ public class PropertyController {
             return ResponseEntity.notFound().build();
         }
         propertyRepository.deleteById(id);
-        return ResponseEntity.ok("Property deleted successfully");
+        return ResponseEntity.ok(Map.of("message", "Property deleted successfully", "propertyId", id));
     }
 }

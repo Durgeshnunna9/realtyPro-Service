@@ -2,6 +2,8 @@ package com.realtypro.schema;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "tasks")
 public class Task {
@@ -12,11 +14,11 @@ public class Task {
 
     @ManyToOne // Multiple tasks assigned to each agent
     @JoinColumn(name="agent_id", nullable = false)
-    private Agent agent;
+    private User agent;
 
     @ManyToOne // A manager assigns many tasks; each task belongs to one manager.
     @JoinColumn(name="manager_id", nullable = false)
-    private Manager manager;
+    private User manager;
 
     @ManyToOne
     @JoinColumn(name="property_id", nullable = false)
@@ -31,6 +33,9 @@ public class Task {
     @Column(name="status", nullable = false)
     private String status;
 
+    @Column(name="assigned_date", nullable = false)
+    private LocalDate assignedDate;
+
     // Constructors
     public Task() {}
 
@@ -42,19 +47,19 @@ public class Task {
         this.taskId = taskId;
     }
 
-    public Agent getAgent() {
+    public User getAgent() {
         return agent;
     }
 
-    public void setAgent(Agent agent) {
+    public void setAgent(User agent) {
         this.agent = agent;
     }
 
-    public Manager getManager() {
+    public User getManager() {
         return manager;
     }
 
-    public void setManager(Manager manager) {
+    public void setManager(User manager) {
         this.manager = manager;
     }
     public Property getProperty() {
@@ -87,5 +92,13 @@ public class Task {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public LocalDate getAssignedDate() {
+        return assignedDate;
+    }
+
+    public void setAssignedDate(LocalDate assignedDate) {
+        this.assignedDate = assignedDate;
     }
 }
