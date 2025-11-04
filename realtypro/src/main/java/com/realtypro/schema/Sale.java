@@ -2,6 +2,8 @@ package com.realtypro.schema;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
 
 @Entity
 @Table(name="sales")
@@ -28,6 +30,9 @@ public class Sale {
 
     @Column(name = "commission",nullable = false)
     private int commission;
+
+    @Column(name = "sale_date", nullable = false)
+    private LocalDate saleDate;
 
     public Sale() {}
 
@@ -75,5 +80,13 @@ public class Sale {
 
     public void setCommission(int commission) {
         this.commission = commission;
+    }
+
+    public LocalDate getSaleDate() {
+        return saleDate;
+    }
+
+    public void setSaleDate(LocalDate saleDate) {
+        this.saleDate = saleDate;
     }
 }
