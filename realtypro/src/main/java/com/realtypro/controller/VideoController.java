@@ -21,7 +21,7 @@ public class VideoController {
     private PropertyRepository propertyRepository;
 
     // ➕ CREATE single video
-    @PostMapping("/create")
+    @PostMapping("/upload")
     public ResponseEntity<?> createVideo(@RequestBody Video video) {
         try {
             // Validate and attach property

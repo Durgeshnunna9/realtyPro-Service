@@ -7,6 +7,7 @@ import com.realtypro.repository.TaskRepository;
 import com.realtypro.repository.UserRepository;
 import com.realtypro.repository.PropertyRepository;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -61,6 +62,14 @@ public class TaskService {
         task.setProperty(property);
 
         return taskRepository.save(task);
+    }
+
+    @Transactional
+    public void updateTaskStatus(Long taskId, String status) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        task.setStatus(status);
+        taskRepository.save(task);
     }
 
     // ✅ READ ALL TASKS

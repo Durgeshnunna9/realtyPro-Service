@@ -45,6 +45,7 @@ public class PerformanceService {
             response.setListings(propertyCount);
             response.setPendingTasks(pendingTasks);
             response.setTotalSales(totalSales != null ? totalSales : 0.0);
+            response.setRating(user.getRating()); // ✅ Added line
         }
         else if (role == Role.MANAGER) {
             long managedProperties = propertyRepository.countByManagerUserId(userId);

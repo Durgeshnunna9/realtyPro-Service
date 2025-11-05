@@ -21,7 +21,7 @@ public class ImageController {
     private PropertyRepository propertyRepository;
 
     // ➕ CREATE single image
-    @PostMapping("/create")
+    @PostMapping("/upload")
     public ResponseEntity<?> createImage(@RequestBody Image image) {
         try {
             // Validate and attach property

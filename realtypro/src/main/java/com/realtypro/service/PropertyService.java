@@ -21,21 +21,21 @@ public class PropertyService {
 
     // ➕ CREATE property
     public Property createProperty(Property property) {
-        if (property.getUser() == null || property.getUser().getUserId() == null) {
+        if (property.getAgent() == null || property.getAgent().getUserId() == null) {
             throw new IllegalArgumentException("User reference is required");
         }
 
         // Fetch user from DB
-        User user = userRepository.findById(property.getUser().getUserId())
+        User user = userRepository.findById(property.getAgent().getUserId())
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "User not found with ID: " + property.getUser().getUserId()));
+                        "User not found with ID: " + property.getAgent().getUserId()));
 
         // Validate role
         if (user.getRole() != Role.AGENT && user.getRole() != Role.MANAGER) {
             throw new IllegalArgumentException("User must be either an AGENT or a MANAGER");
         }
 
-        property.setUser(user);
+        property.setAgent(user);
 
         return propertyRepository.save(property);
     }
@@ -92,16 +92,16 @@ public class PropertyService {
         existing.setLocationAdvantages(updatedProperty.getLocationAdvantages());
 
         // ✅ Update linked user (instead of agent/manager)
-        if (updatedProperty.getUser() != null && updatedProperty.getUser().getUserId() != null) {
-            User user = userRepository.findById(updatedProperty.getUser().getUserId())
+        if (updatedProperty.getAgent() != null && updatedProperty.getAgent().getUserId() != null) {
+            User user = userRepository.findById(updatedProperty.getAgent().getUserId())
                     .orElseThrow(() -> new IllegalArgumentException(
-                            "User not found with ID: " + updatedProperty.getUser().getUserId()));
+                            "User not found with ID: " + updatedProperty.getAgent().getUserId()));
 
             if (user.getRole() != Role.AGENT && user.getRole() != Role.MANAGER) {
                 throw new IllegalArgumentException("User must be either an AGENT or a MANAGER");
             }
 
-            existing.setUser(user);
+            existing.setAgent(user);
         }
 
         return propertyRepository.save(existing);

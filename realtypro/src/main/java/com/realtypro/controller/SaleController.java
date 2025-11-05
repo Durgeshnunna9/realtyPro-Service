@@ -30,7 +30,7 @@ public class SaleController {
     public ResponseEntity<?> createSale(@RequestBody Sale sale) {
         try {
             // Validate Agent (User with role = AGENT)
-            Optional<User> agentOpt = userRepository.findById(sale.getUser().getUserId());
+            Optional<User> agentOpt = userRepository.findById(sale.getAgent().getUserId());
             if (agentOpt.isEmpty() || !"AGENT".equalsIgnoreCase(agentOpt.get().getRole().name())) {
                 return ResponseEntity.badRequest().body("Invalid Agent ID or Role");
             }
@@ -47,7 +47,7 @@ public class SaleController {
                 return ResponseEntity.badRequest().body("Invalid Property ID");
             }
 
-            sale.setUser(agentOpt.get());
+            sale.setAgent(agentOpt.get());
             sale.setManager(managerOpt.get());
             sale.setProperty(propertyOpt.get());
 
@@ -83,9 +83,9 @@ public class SaleController {
             existingSale.setSaleAmount(updatedSale.getSaleAmount());
             existingSale.setCommission(updatedSale.getCommission());
 
-            if (updatedSale.getUser() != null && updatedSale.getUser().getUserId() != null) {
-                userRepository.findById(updatedSale.getUser().getUserId())
-                        .ifPresent(existingSale::setUser);
+            if (updatedSale.getAgent() != null && updatedSale.getAgent().getUserId() != null) {
+                userRepository.findById(updatedSale.getAgent().getUserId())
+                        .ifPresent(existingSale::setAgent);
             }
             if (updatedSale.getManager() != null && updatedSale.getManager().getUserId() != null) {
                 userRepository.findById(updatedSale.getManager().getUserId())

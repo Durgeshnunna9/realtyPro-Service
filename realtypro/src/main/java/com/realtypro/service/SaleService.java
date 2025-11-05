@@ -27,12 +27,12 @@ public class SaleService {
 
     // ✅ Create Sale
     public Sale createSale(Sale sale) {
-        if (sale.getUser() == null || sale.getUser().getUserId() == null) {
+        if (sale.getAgent() == null || sale.getAgent().getUserId() == null) {
             throw new IllegalArgumentException("User reference is required");
         }
 
-        User user = userRepository.findById(sale.getUser().getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + sale.getUser().getUserId()));
+        User user = userRepository.findById(sale.getAgent().getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + sale.getAgent().getUserId()));
 
         if (user.getRole() == null) {
             throw new IllegalArgumentException("User role is not defined");
@@ -41,7 +41,7 @@ public class SaleService {
         Property property = propertyRepository.findById(sale.getProperty().getPropertyId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Property ID: " + sale.getProperty().getPropertyId()));
 
-        sale.setUser(user);
+        sale.setAgent(user);
         sale.setProperty(property);
 
         return saleRepository.save(sale);
@@ -65,9 +65,9 @@ public class SaleService {
             existingSale.setCommission(updatedSale.getCommission());
 
             // Update user
-            if (updatedSale.getUser() != null && updatedSale.getUser().getUserId() != null) {
-                userRepository.findById(updatedSale.getUser().getUserId())
-                        .ifPresent(existingSale::setUser);
+            if (updatedSale.getAgent() != null && updatedSale.getAgent().getUserId() != null) {
+                userRepository.findById(updatedSale.getAgent().getUserId())
+                        .ifPresent(existingSale::setAgent);
             }
 
             // Update property

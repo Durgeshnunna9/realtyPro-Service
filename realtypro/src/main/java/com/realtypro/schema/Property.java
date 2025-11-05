@@ -11,11 +11,11 @@ public class Property {
     private Long propertyId;
 
     @ManyToOne
-    @JoinColumn(name="user_id", nullable = false)
-    private User user;
+    @JoinColumn(name="agent_id", nullable = false)
+    private User agent;
 
     @ManyToOne
-    @JoinColumn(name="manager", nullable = false)
+    @JoinColumn(name="manager_id", nullable = false)
     private User manager;
 
     @Column(name="footfall", nullable = false)
@@ -129,12 +129,12 @@ public class Property {
         this.propertyId = propertyId;
     }
 
-    public User getUser() {
-        return user;
+    public User getAgent() {
+        return agent;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setAgent(User agent) {
+        this.agent = agent;
     }
 
     public User getManager() {

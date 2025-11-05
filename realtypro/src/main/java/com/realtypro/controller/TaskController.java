@@ -7,6 +7,7 @@ import com.realtypro.schema.Task;
 import com.realtypro.schema.Property;
 import com.realtypro.schema.User;
 
+import com.realtypro.service.TaskService;
 import com.realtypro.utilities.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,9 @@ public class TaskController {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private TaskService taskService;
 
     @Autowired
     private UserRepository userRepository;
@@ -101,6 +105,13 @@ public class TaskController {
         Optional<Task> task = taskRepository.findById(id);
         return task.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{taskId}")
+    public ResponseEntity<?> updateTaskStatus(@PathVariable Long taskId, @RequestBody Map<String, String> body) {
+        String newStatus = body.get("status");
+        taskService.updateTaskStatus(taskId, newStatus);
+        return ResponseEntity.ok(Map.of("message", "Task status updated successfully"));
     }
 
     // ✅ UPDATE TASK

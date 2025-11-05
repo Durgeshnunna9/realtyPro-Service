@@ -31,7 +31,7 @@ public class TeamMemberController {
             }
 
             // ✅ Validate Agent
-            Optional<User> agentOpt = userRepository.findById(teamMember.getUser().getUserId());
+            Optional<User> agentOpt = userRepository.findById(teamMember.getAgent().getUserId());
             if (agentOpt.isEmpty() || agentOpt.get().getRole() != Role.AGENT) {
                 return ResponseEntity.badRequest().body("Invalid Agent ID or Role");
             }

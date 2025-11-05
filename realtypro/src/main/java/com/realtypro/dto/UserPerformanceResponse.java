@@ -10,6 +10,7 @@ public class UserPerformanceResponse {
     private long listings;
     private long pendingTasks;
     private double totalSales;
+    private float rating; // ✅ Added rating for agents/managers
 
     // --- For Managers ---
     private long managedProperties;
@@ -66,6 +67,14 @@ public class UserPerformanceResponse {
 
     public void setTotalSales(double totalSales) {
         this.totalSales = totalSales;
+    }
+
+    public float getRating() {
+        return rating;
+    }
+
+    public void setRating(float rating) {
+        this.rating = rating;
     }
 
     public long getManagedProperties() {

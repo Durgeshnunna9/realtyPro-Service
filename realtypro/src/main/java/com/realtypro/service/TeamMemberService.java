@@ -22,7 +22,7 @@ public class TeamMemberService {
 
     // ✅ Create new team member (with validation)
     public TeamMember createTeamMember(TeamMember teamMember) {
-        if (teamMember.getUser() == null || teamMember.getUser().getUserId() == null) {
+        if (teamMember.getAgent() == null || teamMember.getAgent().getUserId() == null) {
             throw new IllegalArgumentException("User reference is required");
         }
 
@@ -30,13 +30,13 @@ public class TeamMemberService {
             throw new IllegalArgumentException("Manager reference is required");
         }
 
-        User user = userRepository.findById(teamMember.getUser().getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + teamMember.getUser().getUserId()));
+        User user = userRepository.findById(teamMember.getAgent().getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + teamMember.getAgent().getUserId()));
 
         User manager = userRepository.findById(teamMember.getManager().getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("Manager not found with ID: " + teamMember.getManager().getUserId()));
 
-        teamMember.setUser(user);
+        teamMember.setAgent(user);
         teamMember.setManager(manager);
 
         return teamMemberRepository.save(teamMember);
