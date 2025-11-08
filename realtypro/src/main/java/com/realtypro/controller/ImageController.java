@@ -1,12 +1,13 @@
 package com.realtypro.controller;
 
-import com.realtypro.repository.ImageRepository;
-import com.realtypro.repository.PropertyRepository;
 import com.realtypro.schema.Image;
 import com.realtypro.schema.Property;
+import com.realtypro.repository.ImageRepository;
+import com.realtypro.repository.PropertyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,77 +15,117 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/images")
 public class ImageController {
+
     @Autowired
     private ImageRepository imageRepository;
 
     @Autowired
     private PropertyRepository propertyRepository;
 
-    // ➕ CREATE single image
+    // 🆕 UPLOAD single image (stored in PostgreSQL)
     @PostMapping("/upload")
-    public ResponseEntity<?> createImage(@RequestBody Image image) {
+    public ResponseEntity<?> uploadImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("propertyId") Long propertyId,
+            @RequestParam(value = "imageGroup", required = false) String imageGroup
+    ) {
         try {
-            // Validate and attach property
-            if (image.getProperty() == null || image.getProperty().getPropertyId() == null) {
-                return ResponseEntity.badRequest().body("Property reference is required");
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("No file uploaded");
             }
 
-            Optional<Property> propertyOpt = propertyRepository.findById(image.getProperty().getPropertyId());
+            Optional<Property> propertyOpt = propertyRepository.findById(propertyId);
             if (propertyOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Property not found with ID: " + image.getProperty().getPropertyId());
+                return ResponseEntity.badRequest().body("Property not found with ID: " + propertyId);
             }
 
+            Image image = new Image();
             image.setProperty(propertyOpt.get());
+            image.setImageGroup(imageGroup != null ? imageGroup : "property_photos");
+            image.setImageData(file.getBytes()); // ✅ store binary data
+
             Image savedImage = imageRepository.save(image);
             return ResponseEntity.ok(savedImage);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error saving image: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Error uploading image: " + e.getMessage());
         }
     }
 
-    // 📋 GET all images
+    // 🖼 FETCH image binary by ID
+    @GetMapping(value = "/{id}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public ResponseEntity<byte[]> getImage(@PathVariable Long id) {
+        try {
+            Image image = imageRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Image not found"));
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(image.getImageData());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    // 📋 GET all images (metadata only, not binary)
     @GetMapping("/all")
     public ResponseEntity<List<Image>> getAllImages() {
         List<Image> images = imageRepository.findAll();
         if (images.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
+
+        // ⚠️ Remove binary data from response (avoid sending large blobs)
+        images.forEach(img -> img.setImageData(null));
+
         return ResponseEntity.ok(images);
     }
 
-    // 🔍 GET images by Property ID
+    // 🔍 GET images by Property ID (metadata only)
     @GetMapping("/property/{propertyId}")
     public ResponseEntity<List<Image>> getImagesByProperty(@PathVariable Long propertyId) {
-        List<Image> images = imageRepository.findByPropertyPropertyId(propertyId);
+        List<Image> images = imageRepository.findByProperty_PropertyId(propertyId);
         if (images.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
+
+        // ⚠️ Strip binary data
+        images.forEach(img -> img.setImageData(null));
+
         return ResponseEntity.ok(images);
     }
 
-    // ✏️ UPDATE image details
+    // ✏️ UPDATE image (replace or change metadata)
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateImage(@PathVariable Long id, @RequestBody Image updatedImage) {
-        Optional<Image> existingOpt = imageRepository.findById(id);
-        if (existingOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> updateImage(
+            @PathVariable Long id,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "imageGroup", required = false) String imageGroup
+    ) {
+        try {
+            Optional<Image> existingOpt = imageRepository.findById(id);
+            if (existingOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Image existing = existingOpt.get();
+
+            if (imageGroup != null) {
+                existing.setImageGroup(imageGroup);
+            }
+
+            if (file != null && !file.isEmpty()) {
+                existing.setImageData(file.getBytes()); // ✅ replace image binary
+            }
+
+            Image saved = imageRepository.save(existing);
+            return ResponseEntity.ok(saved);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error updating image: " + e.getMessage());
         }
-
-        Image existing = existingOpt.get();
-
-        existing.setImageGroup(updatedImage.getImageGroup());
-        existing.setImageUrl(updatedImage.getImageUrl());
-
-        // If property is updated
-        if (updatedImage.getProperty() != null && updatedImage.getProperty().getPropertyId() != null) {
-            propertyRepository.findById(updatedImage.getProperty().getPropertyId())
-                    .ifPresent(existing::setProperty);
-        }
-
-        Image saved = imageRepository.save(existing);
-        return ResponseEntity.ok(saved);
     }
 
     // ❌ DELETE image

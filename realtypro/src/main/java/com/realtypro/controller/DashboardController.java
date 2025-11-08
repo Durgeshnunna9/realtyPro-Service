@@ -47,13 +47,13 @@ public class DashboardController {
         switch (user.getRole()) {
             case AGENT:
                 propertyCount = propertyRepository.countByAgentUserId(userId);
-                pendingTasks = taskRepository.countByAgentUserIdAndStatusNot(userId, "completed");
+                pendingTasks = taskRepository.countByAgentUserIdAndStatusNot(userId, "COMPLETED");
                 totalSales = saleRepository.sumSalesByAgent(userId);
                 break;
 
             case MANAGER:
                 propertyCount = propertyRepository.countByManagerUserId(userId);
-                pendingTasks = taskRepository.countByManagerUserIdAndStatusNot(userId, "completed");
+                pendingTasks = taskRepository.countByManagerUserIdAndStatusNot(userId, "COMPLETED");
                 totalSales = saleRepository.sumSalesByManager(userId);
                 break;
 

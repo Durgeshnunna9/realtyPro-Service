@@ -122,6 +122,7 @@ public class TaskController {
             existingTask.setDescription(updatedTask.getDescription());
             existingTask.setStatus(updatedTask.getStatus());
             existingTask.setAssignedDate(updatedTask.getAssignedDate());
+            existingTask.setPriority(updatedTask.getPriority());
 
             // Optionally update relationships
             if (updatedTask.getAgent() != null) {

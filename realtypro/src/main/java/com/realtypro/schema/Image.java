@@ -8,6 +8,7 @@ public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="image_id", nullable = false)
     private Long imageId;
 
     @ManyToOne
@@ -17,8 +18,9 @@ public class Image {
     @Column(name="image_group", nullable = false)
     private String imageGroup;
 
-    @Column(name="image_url", nullable = false)
-    private String imageUrl;
+    @Lob
+    @Column(name = "image_data", nullable = false)
+    private byte[] imageData;
 
 
     public Image() {}
@@ -47,11 +49,12 @@ public class Image {
         this.imageGroup = imageGroup;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public byte[] getImageData() {
+        return imageData;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImageData(byte[] imageData) {
+        this.imageData = imageData;
     }
+
 }

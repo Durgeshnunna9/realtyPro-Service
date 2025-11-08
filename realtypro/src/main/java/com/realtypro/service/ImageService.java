@@ -6,9 +6,12 @@ import com.realtypro.repository.ImageRepository;
 import com.realtypro.repository.PropertyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
+
+import java.io.IOException;
 
 @Service
 public class ImageService {
@@ -19,57 +22,58 @@ public class ImageService {
     @Autowired
     private PropertyRepository propertyRepository;
 
-    // ➕ CREATE new image
-    public Image createImage(Image image) {
-        if (image.getProperty() == null || image.getProperty().getPropertyId() == null) {
-            throw new IllegalArgumentException("Property reference is required");
+    // ➕ Upload image to DB
+    public Image uploadImage(MultipartFile file, Long propertyId, String imageGroup) throws IOException {
+        Optional<Property> propertyOpt = propertyRepository.findById(propertyId);
+        if (propertyOpt.isEmpty()) {
+            throw new RuntimeException("Property not found with ID: " + propertyId);
         }
 
-        Property property = propertyRepository.findById(image.getProperty().getPropertyId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Property not found with ID: " + image.getProperty().getPropertyId()));
+        Image image = new Image();
+        image.setProperty(propertyOpt.get());
+        image.setImageGroup(imageGroup != null ? imageGroup : "property_photos");
+        image.setImageData(file.getBytes()); // ✅ store binary data
 
-        image.setProperty(property);
+
         return imageRepository.save(image);
     }
 
-    // 📋 GET all images
+    // 🔍 Get single image by ID
+    public Image getImageById(Long id) {
+        return imageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+    }
+
+    // 📋 Get all images
     public List<Image> getAllImages() {
         return imageRepository.findAll();
     }
 
-    // 🔍 GET images by Property ID
+    // 🔍 Get images by property ID
     public List<Image> getImagesByProperty(Long propertyId) {
-        return imageRepository.findByPropertyPropertyId(propertyId);
+        return imageRepository.findByProperty_PropertyId(propertyId);
     }
 
-    // ✏️ UPDATE existing image
+    // ✏️ Update image details
     public Image updateImage(Long id, Image updatedImage) {
         Image existing = imageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Image not found with ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Image not found"));
 
-        if (updatedImage.getImageGroup() != null) {
+        if (updatedImage.getImageGroup() != null)
             existing.setImageGroup(updatedImage.getImageGroup());
-        }
-        if (updatedImage.getImageUrl() != null) {
-            existing.setImageUrl(updatedImage.getImageUrl());
-        }
 
-        // If property is being changed
         if (updatedImage.getProperty() != null && updatedImage.getProperty().getPropertyId() != null) {
-            Property property = propertyRepository.findById(updatedImage.getProperty().getPropertyId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Property not found with ID: " + updatedImage.getProperty().getPropertyId()));
-            existing.setProperty(property);
+            propertyRepository.findById(updatedImage.getProperty().getPropertyId())
+                    .ifPresent(existing::setProperty);
         }
 
         return imageRepository.save(existing);
     }
 
-    // ❌ DELETE image
+    // ❌ Delete image
     public void deleteImage(Long id) {
         if (!imageRepository.existsById(id)) {
-            throw new IllegalArgumentException("Image not found with ID: " + id);
+            throw new RuntimeException("Image not found");
         }
         imageRepository.deleteById(id);
     }

@@ -1,5 +1,7 @@
 package com.realtypro.schema;
 
+import com.realtypro.utilities.Priority;
+import com.realtypro.utilities.TaskStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -35,6 +37,9 @@ public class Task {
 
     @Column(name="assigned_date", nullable = false)
     private LocalDate assignedDate;
+
+    @Column(name="priority", nullable = false)
+    private String priority;
 
     // Constructors
     public Task() {}
@@ -100,5 +105,13 @@ public class Task {
 
     public void setAssignedDate(LocalDate assignedDate) {
         this.assignedDate = assignedDate;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
     }
 }

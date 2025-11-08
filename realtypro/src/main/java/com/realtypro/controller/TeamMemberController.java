@@ -94,6 +94,33 @@ public class TeamMemberController {
         return ResponseEntity.ok(teamMembers);
     }
 
+    // ✅ Get manager info by agent ID (returns just manager details)
+    @GetMapping("/agent/{agentId}/manager-info")
+    public ResponseEntity<?> getManagerInfoByAgentId(@PathVariable Long agentId) {
+        Optional<User> agentOpt = userRepository.findById(agentId);
+        if (agentOpt.isEmpty() || agentOpt.get().getRole() != Role.AGENT) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid Agent ID or Role"));
+        }
+
+        List<TeamMember> teamMembers = teamMemberRepository.findByAgentUserId(agentId);
+        if (teamMembers.isEmpty()) {
+            return ResponseEntity.status(404)
+                    .body(Map.of("error", "No manager assigned to this agent"));
+        }
+
+        TeamMember teamMember = teamMembers.get(0);
+        User manager = teamMember.getManager();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("managerId", manager.getUserId());
+        response.put("managerFirstName", manager.getFirstName());
+        response.put("managerLastName", manager.getLastName());
+        response.put("managerEmail", manager.getEmail());
+        response.put("teamId", teamMember.getTeamId());
+
+        return ResponseEntity.ok(response);
+    }
+
     // ✅ Delete team member
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteTeamMember(@PathVariable Long id) {

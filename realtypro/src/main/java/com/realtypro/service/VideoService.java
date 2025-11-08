@@ -6,7 +6,9 @@ import com.realtypro.schema.Property;
 import com.realtypro.schema.Video;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,46 +22,25 @@ public class VideoService {
     private PropertyRepository propertyRepository;
 
     // ✅ CREATE Video
-    public Video createVideo(Video video) {
-        if (video.getProperty() == null || video.getProperty().getPropertyId() == null) {
-            throw new IllegalArgumentException("Property reference is required");
-        }
+    public Video uploadVideo(Long propertyId, MultipartFile file) throws IOException {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
 
-        Optional<Property> propertyOpt = propertyRepository.findById(video.getProperty().getPropertyId());
-        if (propertyOpt.isEmpty()) {
-            throw new IllegalArgumentException("Property not found with ID: " + video.getProperty().getPropertyId());
-        }
+        Video video = new Video();
+        video.setProperty(property);
+        video.setVideoData(file.getBytes());
 
-        video.setProperty(propertyOpt.get());
         return videoRepository.save(video);
     }
 
-    // ✅ GET all videos
-    public List<Video> getAllVideos() {
-        return videoRepository.findAll();
+    public Optional<Video> getVideoById(Long id) {
+        return videoRepository.findById(id);
     }
 
-    // ✅ GET video by Property ID
-    public Video getVideoByProperty(Long propertyId) {
-        return videoRepository.findByPropertyPropertyId(propertyId);
+    public Optional<Video> getVideoByProperty(Long propertyId) {
+        return videoRepository.findByProperty_PropertyId(propertyId);
     }
 
-    // ✅ UPDATE video
-    public Optional<Video> updateVideo(Long id, Video updatedVideo) {
-        return videoRepository.findById(id).map(existing -> {
-            existing.setVideoUrl(updatedVideo.getVideoUrl());
-
-            // Update property if changed
-            if (updatedVideo.getProperty() != null && updatedVideo.getProperty().getPropertyId() != null) {
-                propertyRepository.findById(updatedVideo.getProperty().getPropertyId())
-                        .ifPresent(existing::setProperty);
-            }
-
-            return videoRepository.save(existing);
-        });
-    }
-
-    // ✅ DELETE video
     public boolean deleteVideo(Long id) {
         if (videoRepository.existsById(id)) {
             videoRepository.deleteById(id);

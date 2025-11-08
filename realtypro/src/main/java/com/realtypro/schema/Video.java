@@ -8,14 +8,16 @@ public class Video {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "video_id", nullable = false)
     private Long videoId;
 
     @OneToOne
     @JoinColumn(name="property_id", nullable = false)
     private Property property;
 
-    @Column(name="video_url", nullable = false)
-    private String videoUrl;
+    @Lob
+    @Column(name = "video_data", nullable = false)
+    private byte[] videoData;
 
     public Video() {}
 
@@ -35,11 +37,12 @@ public class Video {
         this.property = property;
     }
 
-    public String getVideoUrl() {
-        return videoUrl;
+    public byte[] getVideoData() {
+        return videoData;
     }
 
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
+    public void setVideoData(byte[] videoData) {
+        this.videoData = videoData;
     }
+
 }

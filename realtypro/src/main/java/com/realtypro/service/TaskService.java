@@ -7,6 +7,7 @@ import com.realtypro.repository.TaskRepository;
 import com.realtypro.repository.UserRepository;
 import com.realtypro.repository.PropertyRepository;
 
+import com.realtypro.utilities.TaskStatus;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,5 +1,6 @@
 package com.realtypro.schema;
 
+import com.realtypro.utilities.PropertyStatus;
 import jakarta.persistence.*;
 
 @Entity
